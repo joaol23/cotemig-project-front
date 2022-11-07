@@ -57,3 +57,4 @@ export const TitleMenu = styled('h2')`
     font-size: 24px;
     color: #000;
 `
+export default styled;

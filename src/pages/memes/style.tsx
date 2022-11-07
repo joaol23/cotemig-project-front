@@ -41,3 +41,5 @@ export const InputMeme = styled('input')`
     padding: 10px;
     margin: 10px 0;
 `
+
+export default styled;

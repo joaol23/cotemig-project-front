@@ -52,7 +52,7 @@ export function Files({ files, changeDataFiles }: FilesProps) {
     return (
         <ContainerAll>
             <Button variant={'contained'} title="Não ta funcionando :(" color="secondary" onClick={changeOrderFiles} startIcon={<MobiledataOffIcon />}>Cidades</Button>
-            <FilesContainer> {filesElement.map((fileElement: any) => (<RowContainer>{fileElement}</RowContainer>))} </FilesContainer>
+            <FilesContainer> {filesElement.map((fileElement: any, index) => (<RowContainer key={index}>{fileElement}</RowContainer>))} </FilesContainer>
         </ContainerAll>
     )
 }
