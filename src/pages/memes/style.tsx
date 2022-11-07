@@ -6,22 +6,6 @@ export const Container = styled('div')`
     max-width: 1280px;
 `;
 
-export const ColW6 = styled('div')`
-    width: 15%;
-    display: inline-block;
-`
-
-export const Image = styled('img')`
-    width: 50%;
-    height: 50%;
-    box-shadow: 2px 2px 5px gray;
-    transition: 0.5s;
-    cursor: pointer;
-
-    &:hover {
-        width: 100%;
-    }
-`
 export const ContainerFull = styled('div')`
     width: 100%;
     margin: 25px auto;
@@ -31,24 +15,6 @@ export const ContainerFull = styled('div')`
     flex-direction: column;
 `
 
-export const ContainerImage = styled('div')`
-    max-width: 100%;
-    height: 100%;
-    max-height: 500px;
-    position: relative;    
-`
-
-export const CaptionMeme = styled('div')`
-    position: absolute;
-`
-
-export const ImageFull = styled('img')`
-    max-width: 100%;
-    height: 100%;
-    max-height: 500px;
-    position: relative;
-    box-shadow: 2px 2px 5px gray;
-`
 export const ModalBody = styled('div')`
     position: absolute;
     top: 50%;
@@ -62,11 +28,16 @@ export const ModalBody = styled('div')`
     align-items: center;
     justify-content: center;
     flex-direction: column;
+
+    ${({ theme }) => theme.breakpoints.down('md')}{      
+        width: 80%;
+    }
 `
 
 export const InputMeme = styled('input')`
-    width: 60%;
+    width: 80%;
     border: 1px solid black;
     border-radius: 15px;
     padding: 10px;
+    margin: 10px 0;
 `

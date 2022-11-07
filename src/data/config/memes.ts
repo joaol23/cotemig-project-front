@@ -1,0 +1,1 @@
+export const URL_MEMES = "https://api.imgflip.com/get_memes";

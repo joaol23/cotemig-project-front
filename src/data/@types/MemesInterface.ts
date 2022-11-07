@@ -1,7 +1,10 @@
-export interface Meme {
+export interface MemeProps {
     id: string,
     name: string,
-    url: string
+    url: string,
+    width: number,
+    height: number,
+    box_count: number,
 }
 
 export interface CaptionTextMeme {

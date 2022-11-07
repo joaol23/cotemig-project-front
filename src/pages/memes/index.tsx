@@ -1,37 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
-import { Container, Image, ImageFull, ColW6, ContainerFull, ContainerImage, InputMeme, CaptionMeme, ModalBody } from './style';
-import { Meme, CaptionTextMeme } from '../../data/@types/MemesInterface';
+import { Container, ContainerFull, InputMeme, ModalBody } from './style';
+import { MemeProps, CaptionTextMeme } from '../../data/@types/MemesInterface';
 import { Button, FormControl, InputLabel, MenuItem, Modal, Select } from '@mui/material';
-import { Header } from '../../UI/components/Header';
-// import { HexColorPicker } from "react-colorful";
+import { api } from '../../data/services/api';
+import { URL_MEMES } from '../../data/config/memes';
+import { MemeItem } from '../../UI/components/MemePage/Meme';
+import { MemeFull } from '../../UI/components/MemePage/MemeFull';
+import { ChromePicker } from 'react-color';
 // import { toast } from 'react-toastify';
 
 const scrollToRef = (ref: any) => !ref ? '' : window.scrollTo(0, ref.current.offsetTop)
 
-type positionText = {
-    x: number,
-    y: number
+type MemesProps = {
+    memesItems: MemeProps[]
 }
 
-export default function Memes() {
-    const URL_MEMES = "https://api.imgflip.com/get_memes";
-    const [memes, setDataMemes] = useState<Meme[]>()
-    const [meme, setDataMeme] = useState<Meme>()
-    const [captionText, setCaptionText] = useState<CaptionTextMeme[]>();
-    const [openModal, setOpenModal] = useState<boolean>(false);
-    const [positionLegend, setPositonLegend] = useState<positionText>({ x: 0, y: 0 })
-
-    const myRef = useRef(null)
-    const inputCaption = useRef<HTMLInputElement>(null)
-    const inputIdImage = useRef<HTMLInputElement>(null)
-
-    useEffect(() => {
-        fetch(URL_MEMES)
-            .then((res) => res.json())
-            .then((data) => { setDataMemes(data.data.memes) });
-    }, []);
-
-    let captionFake: CaptionTextMeme = {
+export default function Memes({ memesItems }: MemesProps) {
+    const [memes, setDataMemes] = useState<MemeProps[]>(memesItems)
+    const [meme, setDataMeme] = useState<MemeProps>()
+    const [captionFake, setCaptionFake] = useState<CaptionTextMeme>({
         id: 0,
         text: '',
         idImage: 0,
@@ -39,69 +26,61 @@ export default function Memes() {
             x: 0,
             y: 0
         },
-        color: '',
+        color: 'white',
         fontSize: 0
-    };
-
+    })
+    const [captionTextMeme, setCaptionTextMeme] = useState<CaptionTextMeme[]>();
+    const [openModal, setOpenModal] = useState<boolean>(false);
+    const myRef = useRef(null)
 
     const highLightMeme = (event: React.MouseEvent<HTMLImageElement, MouseEvent>) => {
-        if (!memes) {
-            return;
-        }
         const idMeme = event.currentTarget.getAttribute('data-id');
-        getCaptions((!idMeme ? '' : idMeme));
-        let memeChoose = memes.find(meme => meme.id === idMeme);
-        setDataMeme(memeChoose);
+        getCaptions(idMeme);
+        let memeChoosed = memes.find(meme => meme.id === idMeme);
+        setDataMeme(memeChoosed);
         scrollToRef(myRef);
     }
 
-    const getCaptions = (idMeme: string) => {
-        fetch(`/caption-meme/${idMeme}`)
-            .then((res) => res.json())
-            .then((data) => { setCaptionText(data.captions) });
+    const getCaptions = async (idMeme: string | null) => {
+        if (idMeme == '' || !idMeme) { return; }
+
+        const data = await fetch(`/api/text-meme/${idMeme}`);
+
+        if ([200, 201, 304].includes(data.status)) {
+            const memesText = (await data.json()).texts;
+            setCaptionTextMeme(memesText)
+            return;
+        }
+        const errorMessage = (await data.json()).error;
+        console.error(errorMessage)
+        return;
     }
 
     const createCaptionMeme = (event: React.MouseEvent<HTMLImageElement, MouseEvent>) => {
+        if (!meme) return;
         setOpenModal(true)
         const positionRect = event.currentTarget.getBoundingClientRect();
         const x = event.clientX - positionRect.left;
         const y = event.clientY - positionRect.top;
-        setPositonLegend({ x: x, y: y })
+        setCaptionFake({ ...captionFake, position: { x: x, y: y }, idImage: Number(meme.id) });
     }
 
-    const insertCaptionMeme = async (idImage: string) => {
-        await fetch(`/insert-item`, {
+    const insertCaptionMeme = async () => {
+        const data = await fetch(`/api/inserir-text-meme`, {
             method: "POST",
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: captionFake, fileName: 'captionMemes.json' })
+            body: JSON.stringify({ data: captionFake })
         });
-        // toast.success('Legenda adicionada!');
-        getCaptions(idImage);
+        if ([200, 201].includes(data.status)) {
+            const dataText = await data.json();
+            setCaptionTextMeme([...(captionTextMeme || []), dataText.text]);
+            return;
+        }
     }
 
     const makeCaptionMeme = () => {
-        if (!inputCaption.current || !inputIdImage.current) {
-            return;
-        }
-
-        let caption = inputCaption.current.value;
-        if (caption == '') {
-            // toast.error('Coloque um texto!');
-            return;
-        }
-        let idImage = parseInt(inputIdImage.current.value);
-
-        captionFake.text = caption;
-        captionFake.position.y = positionLegend.y;
-        captionFake.position.x = positionLegend.x;
-        captionFake.idImage = idImage;
-
-        if (captionFake.fontSize == 0) {
-            // toast.error('Coloque um tamanho!');
-            return;
-        }
-
-        insertCaptionMeme(inputIdImage.current.value);
+        if (!meme) { return; }
+        insertCaptionMeme();
         setOpenModal(false)
     }
 
@@ -114,28 +93,13 @@ export default function Memes() {
     return (
         <>
             <Container>
+                <ContainerFull ref={myRef}>
+                    {
+                        !meme ? '' : <MemeFull meme={meme} createCaptionMeme={createCaptionMeme} captionText={captionTextMeme} />
+                    }
+                </ContainerFull>
                 {
-                    !meme ? <ContainerFull ref={myRef} /> : (
-                        <ContainerFull ref={myRef}>
-                            <h2 style={{ color: 'black' }}>{meme.name}</h2>
-                            <ContainerImage>
-                                <ImageFull onClick={createCaptionMeme} src={meme.url} />
-                                {
-                                    !captionText ? '' : captionText.map(caption => (
-                                        <CaptionMeme key={caption.id} style={{ color: caption.color, fontSize: caption.fontSize, top: caption.position.y, left: caption.position.x }}>{caption.text}</CaptionMeme>
-                                    ))
-                                }
-                            </ContainerImage>
-                        </ContainerFull>
-                    )
-                }
-                {
-                    !memes ? '' : memes.map(meme =>
-                    (
-                        <ColW6 key={meme.id} data-id={meme.id} onClick={highLightMeme}>
-                            <Image src={meme.url} style={{ color: 'black' }} />
-                        </ColW6>
-                    ))
+                    memes.map(meme => (<MemeItem key={meme.id} meme={meme} highLightMeme={highLightMeme} />))
                 }
             </Container>
             <Modal
@@ -145,17 +109,17 @@ export default function Memes() {
                 aria-describedby="modal-modal-description">
                 <ModalBody>
                     <h2>Crie sua legenda:</h2>
-                    <InputMeme ref={inputCaption} type="text" defaultValue={''} name="legendMeme" />
+                    <InputMeme placeholder={"Texto da legenda..."} onChange={event => setCaptionFake({ ...captionFake, text: (event.target.value) })} type="text" defaultValue={''} name="legendMeme" />
                     <>
-                        {/* <HexColorPicker style={{ margin: '10px auto' }} color="white" onChange={color => captionFake.color = color} /> */}
-                        <FormControl fullWidth>
+                        <ChromePicker color={captionFake.color} onChangeComplete={color => setCaptionFake({ ...captionFake, color: color.hex })} />
+                        <FormControl fullWidth style={{ marginTop: "20px" }}>
                             <InputLabel id="demo-simple-select-label">Font-size</InputLabel>
                             <Select
                                 labelId="demo-simple-select-label"
                                 id="demo-simple-select"
                                 label="Font-size"
                                 defaultValue={0}
-                                onChange={value => captionFake.fontSize = (value.target.value as number)}
+                                onChange={event => setCaptionFake({ ...captionFake, fontSize: (event.target.value as number) })}
                             >
                                 <MenuItem value={0}>Escolha um tamanho para a legenda</MenuItem>
                                 {
@@ -164,10 +128,19 @@ export default function Memes() {
                             </Select>
                         </FormControl>
                     </>
-                    <input ref={inputIdImage} type="hidden" defaultValue={!meme ? '' : meme.id} />
                     <Button onClick={makeCaptionMeme} style={{ margin: '10px 0' }} variant="contained" color="success">criar</Button>
                 </ModalBody>
             </Modal>
         </>
     );
+}
+
+export async function getStaticProps() {
+    const memesItems = (await api.get<{ data: { memes: MemeProps[] } }>(URL_MEMES)).data.data.memes;
+
+    return {
+        props: {
+            memesItems
+        },
+    }
 }
