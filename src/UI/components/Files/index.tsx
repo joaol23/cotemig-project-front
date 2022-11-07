@@ -4,7 +4,7 @@ import { ImageService } from "../../../data/services/Images/Images";
 import { Button } from "@mui/material"
 import MobiledataOffIcon from '@mui/icons-material/MobiledataOff';
 import { ColoursService } from '../../../data/services/Colours/Colours';
-import { JSXElementConstructor, ReactElement, ReactFragment, ReactPortal, useState } from "react";
+import { JSXElementConstructor, Key, ReactElement, ReactFragment, ReactPortal, useState } from "react";
 import { chunk } from "../../../data/services/Chunk/Chunk";
 
 type FilesProps = {
@@ -52,7 +52,7 @@ export function Files({ files, changeDataFiles }: FilesProps) {
     return (
         <ContainerAll>
             <Button variant={'contained'} title="Não ta funcionando :(" color="secondary" onClick={changeOrderFiles} startIcon={<MobiledataOffIcon />}>Cidades</Button>
-            <FilesContainer> {filesElement.map((fileElement: any, index) => (<RowContainer key={index}>{fileElement}</RowContainer>))} </FilesContainer>
+            <FilesContainer> {filesElement.map((fileElement: any, index: number) => (<RowContainer key={index}>{fileElement}</RowContainer>))} </FilesContainer>
         </ContainerAll>
     )
 }
